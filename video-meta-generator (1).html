@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VideoMeta AI — Title, Description & Hashtag Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0f1420;
+    --surface2: #161d2e;
+    --border: #1e2a42;
+    --accent: #00d4ff;
+    --accent2: #ff3cac;
+    --accent3: #7b2fff;
+    --text: #e8edf8;
+    --muted: #6b7a99;
+    --glow: 0 0 30px rgba(0,212,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(123,47,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    background: rgba(0,212,255,0.05);
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(0,212,255,0.3); }
+    50% { border-color: rgba(0,212,255,0.7); box-shadow: 0 0 15px rgba(0,212,255,0.2); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 88px);
+    letter-spacing: 2px;
+    line-height: 0.95;
+    background: linear-gradient(135deg, #fff 20%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+
+  /* Input Area */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .input-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    opacity: 0.6;
+  }
+
+  .field-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .field-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    transition: all 0.25s;
+    outline: none;
+    resize: none;
+  }
+
+  input[type="text"]:focus, select:focus, textarea:focus {
+    border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08), inset 0 0 20px rgba(0,212,255,0.03);
+  }
+
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300d4ff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+    cursor: pointer;
+  }
+
+  select option {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* Generate Button */
+  .generate-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 24px;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+  }
+
+  .generate-btn:active:not(:disabled) { transform: translateY(0); }
+
+  .generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .generate-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -60%;
+    width: 40%; height: 200%;
+    background: rgba(255,255,255,0.15);
+    transform: skewX(-20deg);
+    transition: left 0.5s;
+  }
+
+  .generate-btn:hover::before { left: 120%; }
+
+  /* Loading */
+  .loader {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .loader.active { display: flex; }
+
+  .dots {
+    display: flex; gap: 6px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; background: var(--accent3); }
+  .dot:nth-child(3) { animation-delay: 0.4s; background: var(--accent2); }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+    40% { transform: scale(1.1); opacity: 1; }
+  }
+
+  /* Results */
+  .results {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp 0.5s ease;
+  }
+
+  .results.visible { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .result-card:hover { border-color: rgba(0,212,255,0.2); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,212,255,0.03);
+  }
+
+  .card-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .icon-title { background: rgba(0,212,255,0.1); color: var(--accent); }
+  .icon-desc { background: rgba(123,47,255,0.1); color: var(--accent3); }
+  .icon-hash { background: rgba(255,60,172,0.1); color: var(--accent2); }
+  .icon-trend { background: rgba(255,200,0,0.1); color: #ffc800; }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .copy-btn.copied {
+    border-color: #00e676;
+    color: #00e676;
+    background: rgba(0,230,118,0.05);
+  }
+
+  .card-body {
+    padding: 22px;
+  }
+
+  .result-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Hashtags */
+  .hashtag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .hashtag-pill {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+  }
+
+  .hashtag-pill.custom {
+    background: rgba(0,212,255,0.07);
+    border-color: rgba(0,212,255,0.25);
+    color: var(--accent);
+  }
+
+  .hashtag-pill.trending {
+    background: rgba(255,60,172,0.07);
+    border-color: rgba(255,60,172,0.25);
+    color: var(--accent2);
+  }
+
+  .hashtag-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+  }
+
+  .hashtag-pill.selected {
+    opacity: 0.5;
+    transform: none;
+    text-decoration: line-through;
+  }
+
+  /* Trending section */
+  .trending-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .trend-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .trend-label.custom { color: var(--accent); }
+  .trend-label.trending { color: var(--accent2); }
+
+  .separator {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* Regenerate */
+  .regen-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 20px;
+    border-radius: 9px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+  }
+
+  .regen-btn:hover {
+    border-color: var(--accent3);
+    color: var(--accent3);
+    background: rgba(123,47,255,0.05);
+  }
+
+  /* Platform selector */
+  .platform-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .platform-chip {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .platform-chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+  }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(255,60,60,0.08);
+    border: 1px solid rgba(255,60,60,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    .options-row { grid-template-columns: 1fr; }
+    h1 { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="badge">✦ AI-POWERED GENERATOR</div>
+    <h1>VIDEOMETA<br>AI</h1>
+    <p class="subtitle">Generate killer titles, descriptions & trending hashtags — instantly.</p>
+  </header>
+
+  <!-- Input Card -->
+  <div class="input-card">
+    <div class="field-label">Video Title / Topic</div>
+    <input type="text" id="videoTitle" placeholder="e.g. How to make viral YouTube Shorts in 2025..." />
+
+    <div class="options-row" style="margin-top: 20px;">
+      <div>
+        <div class="field-label" style="margin-top:0">Platform</div>
+        <select id="platform">
+          <option value="YouTube">YouTube</option>
+          <option value="Instagram Reels">Instagram Reels</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Twitter/X">Twitter / X</option>
+          <option value="LinkedIn">LinkedIn</option>
+          <option value="Facebook">Facebook</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label" style="margin-top:0">Tone</div>
+        <select id="tone">
+          <option value="engaging and energetic">Energetic 🔥</option>
+          <option value="professional and informative">Professional 💼</option>
+          <option value="casual and friendly">Casual & Friendly 😊</option>
+          <option value="inspirational and motivational">Inspirational ✨</option>
+          <option value="educational and clear">Educational 📚</option>
+          <option value="funny and witty">Funny & Witty 😂</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="options-row">
+      <div>
+        <div class="field-label">Niche / Category</div>
+        <input type="text" id="niche" placeholder="e.g. Tech, Fitness, Travel, Food..." />
+      </div>
+      <div>
+        <div class="field-label">Number of Hashtags</div>
+        <select id="hashCount">
+          <option value="10">10 Hashtags</option>
+          <option value="15" selected>15 Hashtags</option>
+          <option value="20">20 Hashtags</option>
+          <option value="30">30 Hashtags</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateContent()">
+      ⚡ GENERATE NOW
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <span>AI is crafting your content...</span>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- Title -->
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-icon icon-title">T</div>
+          <span style="color: var(--accent)">Generated Titles</span>
+        </div>
+        <button class="copy-btn" onclick="copyContent('titleContent', this)">
+          📋 Copy
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="result-text" id="titleContent"></div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-icon icon-desc">D</div>
+          <span style="color: var(--accent3)">Description</span>
+        </div>
+        <button class="copy-btn" onclick="copyContent('descContent', this)">
+          📋 Copy
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="result-text" id="descContent"></div>
+      </div>
+    </div>
+
+    <!-- Hashtags -->
+    <div class="result-card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-icon icon-hash">#</div>
+          <span style="color: var(--accent2)">Hashtags</span>
+        </div>
+        <button class="copy-btn" onclick="copyAllHashtags(this)">
+          📋 Copy All
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="trending-header">
+          <div class="trend-label custom">● Topic-Specific</div>
+        </div>
+        <div class="hashtag-grid" id="customHashtags"></div>
+
+        <div class="separator"></div>
+
+        <div class="trending-header">
+          <div class="trend-label trending">🔥 Trending Now</div>
+        </div>
+        <div class="hashtag-grid" id="trendingHashtags"></div>
+      </div>
+    </div>
+
+    <!-- Regen button -->
+    <button class="regen-btn" onclick="generateContent()">
+      🔄 Regenerate All
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+  let lastGeneratedData = null;
+
+  async function generateContent() {
+    const title = document.getElementById('videoTitle').value.trim();
+    if (!title) {
+      showError('Please enter a video title or topic first!');
+      return;
+    }
+
+    const platform = document.getElementById('platform').value;
+    const tone = document.getElementById('tone').value;
+    const niche = document.getElementById('niche').value.trim();
+    const hashCount = document.getElementById('hashCount').value;
+
+    hideError();
+    setLoading(true);
+    hideResults();
+
+    const prompt = `You are a social media content expert. Given the following video topic/title, generate optimized content for ${platform}.
+
+Video Topic: "${title}"
+Platform: ${platform}
+Tone: ${tone}
+${niche ? `Niche/Category: ${niche}` : ''}
+Number of hashtags: ${hashCount} total
+
+Generate the following in JSON format only (no markdown, no extra text):
+{
+  "titles": [
+    "Title option 1 — optimized for ${platform}",
+    "Title option 2 — a different angle",
+    "Title option 3 — more curiosity-driven"
+  ],
+  "description": "A compelling ${platform} description (150-300 words). Include a hook, value proposition, call to action, and relevant keywords. Make it ${tone}.",
+  "customHashtags": ["#hashtag1", "#hashtag2", ...],
+  "trendingHashtags": ["#trending1", "#trending2", ...]
+}
+
+Rules:
+- customHashtags: ${Math.floor(hashCount * 0.6)} hashtags specific to the video topic and niche
+- trendingHashtags: ${Math.floor(hashCount * 0.4)} currently popular/trending hashtags for ${platform} that fit the content
+- All hashtags must be relevant and optimized for ${platform} reach
+- Titles must be click-worthy and SEO-optimized for ${platform}
+- Description should naturally include keywords
+
+Return ONLY the JSON object, nothing else.`;
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+      const data = await response.json();
+      const text = data.content?.map(i => i.text || '').join('') || '';
+
+      let parsed;
+      try {
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        throw new Error('Failed to parse AI response. Please try again.');
+      }
+
+      lastGeneratedData = parsed;
+      displayResults(parsed);
+
+    } catch (err) {
+      showError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function displayResults(data) {
+    // Titles
+    const titlesHtml = data.titles
+      .map((t, i) => `<div style="padding: 10px 14px; background: var(--surface2); border-radius: 8px; border-left: 2px solid var(--accent); margin-bottom: 8px; font-size:14px;"><span style="color:var(--muted); font-family: 'Space Mono', monospace; font-size:11px; margin-right:8px;">${i+1}.</span>${t}</div>`)
+      .join('');
+    document.getElementById('titleContent').innerHTML = titlesHtml;
+
+    // Description
+    document.getElementById('descContent').textContent = data.description;
+
+    // Custom Hashtags
+    const customGrid = document.getElementById('customHashtags');
+    customGrid.innerHTML = '';
+    (data.customHashtags || []).forEach(tag => {
+      const pill = document.createElement('span');
+      pill.className = 'hashtag-pill custom';
+      pill.textContent = tag.startsWith('#') ? tag : '#' + tag;
+      pill.onclick = () => pill.classList.toggle('selected');
+      customGrid.appendChild(pill);
+    });
+
+    // Trending Hashtags
+    const trendGrid = document.getElementById('trendingHashtags');
+    trendGrid.innerHTML = '';
+    (data.trendingHashtags || []).forEach(tag => {
+      const pill = document.createElement('span');
+      pill.className = 'hashtag-pill trending';
+      pill.textContent = tag.startsWith('#') ? tag : '#' + tag;
+      pill.onclick = () => pill.classList.toggle('selected');
+      trendGrid.appendChild(pill);
+    });
+
+    document.getElementById('results').classList.add('visible');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyContent(id, btn) {
+    const el = document.getElementById(id);
+    let text;
+    if (id === 'titleContent') {
+      text = Array.from(el.querySelectorAll('div')).map(d => d.textContent.replace(/^\d+\.\s*/, '')).join('\n');
+    } else {
+      text = el.textContent;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function copyAllHashtags(btn) {
+    const allPills = document.querySelectorAll('.hashtag-pill:not(.selected)');
+    const tags = Array.from(allPills).map(p => p.textContent).join(' ');
+    navigator.clipboard.writeText(tags).then(() => {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copy All';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function setLoading(on) {
+    document.getElementById('loader').classList.toggle('active', on);
+    document.getElementById('generateBtn').disabled = on;
+    document.getElementById('generateBtn').textContent = on ? '⏳ GENERATING...' : '⚡ GENERATE NOW';
+  }
+
+  function hideResults() {
+    document.getElementById('results').classList.remove('visible');
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = '⚠ ' + msg;
+    el.classList.add('visible');
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  // Enter key trigger
+  document.getElementById('videoTitle').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generateContent();
+  });
+</script>
+
+</body>
+</html>
